@@ -111,7 +111,11 @@ void calculerPhysique( )
    if ( etat.enmouvement )
    {
       static int sens[6] = { +1, +1, +1, +1, +1, +1 };
+      // glm::vec3 vitesse( 0.03, 0.02, 0.05 );
       glm::vec3 vitesse( 0.03, 0.02, 0.05 );
+      float facteurVitesse = .005;
+      vitesse *= facteurVitesse;
+
       // mouvement en X
       if ( bestiole.position.x-bestiole.taille <= -0.5*etat.dimBoite ) sens[0] = +1.0;
       else if ( bestiole.position.x+bestiole.taille >= 0.5*etat.dimBoite ) sens[0] = -1.0;
@@ -128,19 +132,19 @@ void calculerPhysique( )
       // angle des pattes et des ailes
       if ( bestiole.anglePatte <= 0.0 ) sens[3] = +1.0;
       else if ( bestiole.anglePatte >= 90.0 ) sens[3] = -1.0;
-      bestiole.anglePatte += 1.0 * sens[3];
+      bestiole.anglePatte += 1.0 * sens[3] * facteurVitesse;
       if ( bestiole.angleAile <= 0.0 ) sens[4] = +1.0;
       else if ( bestiole.angleAile >= 90.0 ) sens[4] = -1.0;
-      bestiole.angleAile += 2.0 * sens[4];
+      bestiole.angleAile += 2.0 * sens[4] * facteurVitesse;
 
       // taille du corps
       if ( bestiole.taille <= 0.25 ) sens[5] = +1.0;
       else if ( bestiole.taille >= 1.0 ) sens[5] = -1.0;
-      bestiole.taille += 0.005 * sens[5];
+      bestiole.taille += 0.005 * sens[5] * facteurVitesse;
 
       // rotation du corps
       if ( bestiole.angleCorps > 360.0 ) bestiole.angleCorps -= 360.0;
-      bestiole.angleCorps += 0.5;
+      bestiole.angleCorps += facteurVitesse * 0.5;
    }
 }
 
@@ -298,13 +302,15 @@ void afficherCorps()
    // avec l'angle de rotation "bestiole.angleCorps" et de la taille "bestiole.taille"
 
    // amener le repère à la position courante
-   // ...
+   matrModel.Translate(bestiole.position[0], bestiole.position[1], bestiole.position[2]);
+   matrModel.Rotate(bestiole.angleCorps, 0., 0., 1.);
 
    // montrer le repère à la position courante
    afficherRepereCourant( );
 
-   matrModel.PushMatrix();{
+   matrModel.PushMatrix();
 
+   {
       // afficher le bon modèle
       switch ( etat.modele )
       {
@@ -313,16 +319,23 @@ void afficherCorps()
 
          // afficher le corps
          glVertexAttrib3f( locColor, 0.0, 1.0, 0.0 ); // vert; équivalent au glColor() de OpenGL 2.x
-         matrModel.PushMatrix();{
+
+         matrModel.PushMatrix();
+         {
+           matrModel.Rotate(90.0, 0., 1.0, 0.);
+           matrModel.Scale(bestiole.taille, bestiole.taille, 2.0*bestiole.taille);
+           matrModel.Translate(0.0, 0.0, -.5);
+
             // ==> Avant de tracer, on doit informer la carte graphique des changements faits à la matrice de modélisation
             glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
             afficherCylindre();
-         }matrModel.PopMatrix(); glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
+         }
+         matrModel.PopMatrix(); glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
 
          // afficher la tête
          glVertexAttrib3f( locColor, 1.0, 0.0, 1.0 ); // magenta; équivalent au glColor() de OpenGL 2.x
          matrModel.PushMatrix();{
-            matrModel.Translate( 0.0, 2.0, 0.0 ); // (bidon) À MODIFIER
+            matrModel.Translate( bestiole.taille, 0.0, bestiole.taille ); // (bidon) À MODIFIER
             glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
             afficherSphere();
          }matrModel.PopMatrix(); glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
@@ -337,9 +350,11 @@ void afficherCorps()
             afficherTheiere();
          }matrModel.PopMatrix(); glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
          break;
-
       }
-   }matrModel.PopMatrix(); glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
+   }
+
+   matrModel.PopMatrix();
+   glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
 }
 
 // afficher les deux ailes
@@ -349,12 +364,32 @@ void afficherAiles()
 
    // ajouter une ou des transformations afin de tracer des ailes carrées, de la même longueur que le corps
    // (partie 1) MODIFICATIONS ICI ...
-   matrModel.PushMatrix();{
-      matrModel.Translate( 0.0, 3.0, 0.0 ); // (bidon) À MODIFIER
+
+   matrModel.PushMatrix();
+   {
+      matrModel.Translate( 0.0, M_SQRT2/2.0*bestiole.taille, M_SQRT2/2.0*bestiole.taille ); // (bidon) À MODIFIER
+      matrModel.Rotate(bestiole.angleAile, 1.0, 0.0, 0.0);
+      matrModel.Translate(0.0, bestiole.taille, 0.0);
+      matrModel.Scale(2.0*bestiole.taille, 2.0*bestiole.taille, 2.0*bestiole.taille);
       // afficherRepereCourant( ); // débogage
       glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
       afficherQuad();
-   }matrModel.PopMatrix(); glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
+   }
+   matrModel.PopMatrix();
+
+   matrModel.PushMatrix();
+   {
+      matrModel.Translate( 0.0, -M_SQRT2/2.0*bestiole.taille, M_SQRT2/2.0*bestiole.taille ); // (bidon) À MODIFIER
+      matrModel.Rotate(-bestiole.angleAile, 1.0, 0.0, 0.0);
+      matrModel.Translate(0.0, -bestiole.taille, 0.0);
+      matrModel.Scale(2.0*bestiole.taille, 2.0*bestiole.taille, 2.0*bestiole.taille);
+      // afficherRepereCourant( ); // débogage
+      glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
+      afficherQuad();
+   }
+   matrModel.PopMatrix();
+
+   glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
 }
 
 // afficher les quatre pattes
@@ -363,13 +398,61 @@ void afficherPattes()
    glVertexAttrib3f( locColor, 0.5, 0.5, 1.0 ); // bleu foncé; équivalent au glColor() de OpenGL 2.x
 
    // ajouter une ou des transformations afin de tracer les pattes de largeur "bestiole.largPatte" et longueur "bestiole.longPatte"
-   // (partie 1) MODIFICATIONS ICI ...
-   matrModel.PushMatrix();{
-      matrModel.Translate( 0.0, -3.0, 0.0 ); // (bidon) À MODIFIER
+   // patte avant droite
+   matrModel.PushMatrix();
+   {
+
+
+      matrModel.Translate( bestiole.taille, -M_SQRT2/2.0*bestiole.taille, -M_SQRT2/2.0*bestiole.taille );
+      matrModel.Rotate(bestiole.anglePatte, 0.0, 1.0, -1.0);
+      matrModel.Translate(bestiole.longPatte/2, 0.0, 0.0);
+      matrModel.Scale(bestiole.longPatte, bestiole.largPatte, bestiole.largPatte);
       // afficherRepereCourant( ); // débogage
       glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
       afficherCube();
-   }matrModel.PopMatrix(); glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
+   }
+   matrModel.PopMatrix(); glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
+
+   // patte avant gauche
+   matrModel.PushMatrix();
+   {
+
+
+      matrModel.Translate( bestiole.taille, M_SQRT2/2.0*bestiole.taille, -M_SQRT2/2.0*bestiole.taille );
+      matrModel.Rotate(bestiole.anglePatte, 0.0, 1.0, 1.0);
+      matrModel.Translate(bestiole.longPatte/2, 0.0, 0.0);
+      matrModel.Scale(bestiole.longPatte, bestiole.largPatte, bestiole.largPatte);
+      // afficherRepereCourant( ); // débogage
+      glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
+      afficherCube();
+   }
+   matrModel.PopMatrix(); glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
+
+   // patte arriere droite
+   matrModel.PushMatrix();
+   {
+      matrModel.Translate( -bestiole.taille, -M_SQRT2/2.0*bestiole.taille, -M_SQRT2/2.0*bestiole.taille );
+      matrModel.Rotate(bestiole.anglePatte, 0.0, -1.0, 1.0);
+      matrModel.Translate(-bestiole.longPatte/2, 0.0, 0.0);
+      matrModel.Scale(bestiole.longPatte, bestiole.largPatte, bestiole.largPatte);
+      // afficherRepereCourant( ); // débogage
+      glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
+      afficherCube();
+   }
+   matrModel.PopMatrix(); glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
+
+   // patte arriere gauche
+   matrModel.PushMatrix();
+   {
+      matrModel.Translate( -bestiole.taille, M_SQRT2/2.0*bestiole.taille, -M_SQRT2/2.0*bestiole.taille );
+      matrModel.Rotate(bestiole.anglePatte, 0.0, -1.0, -1.0);
+      matrModel.Translate(-bestiole.longPatte/2, 0.0, 0.0);
+      matrModel.Scale(bestiole.longPatte, bestiole.largPatte, bestiole.largPatte);
+      // afficherRepereCourant( ); // débogage
+      glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
+      afficherCube();
+   }
+   matrModel.PopMatrix(); glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
 }
 
 void afficherBestiole()
