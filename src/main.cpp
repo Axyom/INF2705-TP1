@@ -66,7 +66,18 @@ public:
          // matrVisu.Translate( 0., 0., -5. );
 
          matrVisu.LoadIdentity( );
+
+         // coordonnees spheriques
          matrVisu.Translate( 0., 0., -dist );
+         matrVisu.Rotate(-phi + 90, 1., 0., 0.);
+         matrVisu.Rotate(-theta, 0., 1., 0.);
+
+         // translation initiale
+         matrVisu.Translate(0., -5., 0.);
+         matrVisu.Rotate(-90, 1., 0., 0. );
+         matrVisu.Rotate(-90, 0., 0., 1. );
+
+         //matrVisu.Rotate();
          // utilisez matrVisu.Translate(), matrVisu.Rotate(), ...
       }
    }
