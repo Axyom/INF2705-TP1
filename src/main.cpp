@@ -1,6 +1,6 @@
 // Prénoms, noms et matricule des membres de l'équipe:
-// - Prénom1 NOM1 (matricule1)
-// - Prénom2 NOM2 (matricule2)
+// - Gergi Younis (matricule1)
+// - Paul Michelon (1971832)
 #warning "Écrire les prénoms, noms et matricule des membres de l'équipe dans le fichier et commenter cette ligne"
 
 #include <iostream>
@@ -103,13 +103,14 @@ public:
       if ( angleAile > 90.0 ) angleAile = 90.0; else if ( angleAile < 0.0 ) angleAile = 0.0;
    }
    glm::vec3 position;       // position courante de la bestiole
+   glm::vec3 last_position;
    GLfloat taille;           // facteur d'échelle du corps
    GLfloat angleCorps;       // angle de rotation (en degrés) de la bestiole
    GLfloat angleAile;        // angle de rotation (en degrés) des ailes
    GLfloat anglePatte;       // angle de rotation (en degrés) des pattes
    const GLfloat longPatte;  // longueur des pattes
    const GLfloat largPatte;  // largeur des pattes
-} bestiole = { glm::vec3(0.0, 0.0, 2.0), 0.5, 0.0, 0.0, 0.0, 0.7, 0.1 };
+} bestiole = { glm::vec3(0.0, 0.0, 2.0), glm::vec3(0.0, 0.0, 0.0), 0.5, 0.0, 0.0, 0.0, 0.7, 0.1 };
 
 // partie 2: utilisaiton de vbo et vao
 GLuint vao[2] = {0,0};
@@ -122,7 +123,6 @@ void calculerPhysique( )
    if ( etat.enmouvement )
    {
       static int sens[6] = { +1, +1, +1, +1, +1, +1 };
-      // glm::vec3 vitesse( 0.03, 0.02, 0.05 );
       glm::vec3 vitesse( 0.03, 0.02, 0.05 );
       float facteurVitesse = .005;
       vitesse *= facteurVitesse;
@@ -323,8 +323,45 @@ void afficherCorps()
    // avec l'angle de rotation "bestiole.angleCorps" et de la taille "bestiole.taille"
 
    // amener le repère à la position courante
-   matrModel.Translate(bestiole.position[0], bestiole.position[1], bestiole.position[2]);
-   matrModel.Rotate(bestiole.angleCorps, 0., 0., 1.);
+   if(1)
+   {
+     matrModel.Translate(bestiole.position[0], bestiole.position[1], bestiole.position[2]);
+     matrModel.Rotate(bestiole.angleCorps, 0., 0., 1.);
+   }
+   else
+   {
+     matrModel.Translate(bestiole.position[0], bestiole.position[1], bestiole.position[ 2]);
+
+     glm::vec3 dir = bestiole.position - bestiole.last_position;
+     bestiole.last_position = bestiole.position;
+     //glm::vec3 orientation = glm::vec3(1.0, 0.0, 0.0);
+     float thet = atan(dir[1]/dir[0]);
+     float ph = atan(dir[2]/sqrt(dir[1]*dir[1] + dir[0]*dir[0]));
+
+     std::cout << "\n";
+     std::cout << thet << " theta\n";
+     std::cout << ph << " ph\n";
+
+     if (dir[0] == 0.0)
+     {
+       thet = 90;
+
+       if (dir[1] == 0.0)
+       {
+         ph = 90;
+       }
+     }
+
+     if (dir[0] < 0.0)
+     {
+       thet = thet + M_PI;
+     }
+
+     matrModel.Rotate(glm::degrees(thet), 0., 0., 1.);
+     matrModel.Rotate(glm::degrees(ph), 0., -1., 0.);
+
+   }
+
 
    // montrer le repère à la position courante
    afficherRepereCourant( );
@@ -356,7 +393,7 @@ void afficherCorps()
          // afficher la tête
          glVertexAttrib3f( locColor, 1.0, 0.0, 1.0 ); // magenta; équivalent au glColor() de OpenGL 2.x
          matrModel.PushMatrix();{
-            matrModel.Translate( bestiole.taille, 0.0, bestiole.taille ); // (bidon) À MODIFIER
+            matrModel.Translate( bestiole.taille, 0.0, bestiole.taille );
             glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
             afficherSphere();
          }matrModel.PopMatrix(); glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );

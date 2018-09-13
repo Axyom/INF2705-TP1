@@ -4,7 +4,28 @@ Q1: Supposons que les coordonnées du modèle soient exprimées dans un système
     afin de préserver le même effet visuel d'une rotation positive ?  Quelle
     serait la nouvelle matrice pour une rotation autour de l'axe des Z ?
 
+Un système de coordonnées main gauche est symétrique par rapport à un système de coordonnées main droite. Ainsi, la convention du sens des rotations est inversée.
+Par conséquent, pour préserver le même effet visuel qu'une rotation positive, il faudrait modifier la matrice 4x4  en prenant l'opposé des angles.
 
+Par exemple, pour une matrice de rotation 4x4 autour de l'axe Z exprimée comme suit en coordonnées main droite:
+
+[
+	cos(theta)	-sin(theta)	0		0
+	sin(theta)	cos(theta)	0		0
+	0		0		1		0
+	0		0		0		1		
+]
+
+On obtient la matrice équivalente suivante en coordonnées main gauche:
+
+[
+	cos(theta)	sin(theta)	0		0
+	-sin(theta)	cos(theta)	0		0
+	0		0		1		0
+	0		0		0		1		
+]
+
+En utilisant le fait que cos est paire et que sin est impaire.
 
 Q2: Dans ce TP, on peut déplacer la bestiole avec les flèches du clavier ou
     encore lancer un déplacement « automatique » avec la touche 'espace'.
