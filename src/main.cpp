@@ -227,12 +227,20 @@ void FenetreTP::initialiser()
    // initialiser le second VAO (théière)
    glBindVertexArray( vao[1] );
 
-   // (partie 2) MODIFICATIONS ICI ...
-   // créer le VBO pour les sommets
-   // ...
+     // (partie 2) MODIFICATIONS ICI ...
+     // créer le VBO pour les sommets
+     glGenBuffers( 1, &vboTheiereSommets );
+     glBindBuffer( GL_ARRAY_BUFFER, vboTheiereSommets );
+     glBufferData( GL_ARRAY_BUFFER, sizeof(gTheiereSommets), gTheiereSommets, GL_STATIC_DRAW );
+     glVertexAttribPointer( locVertex, 3, GL_FLOAT, GL_FALSE, 0, 0 );
+     glEnableVertexAttribArray(locVertex);
+     //glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
-   // créer le VBO la connectivité
-   // ...
+     // créer le VBO la connectivité
+     glGenBuffers( 1, &vboTheiereConnec );
+     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, vboTheiereConnec );
+     glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(gTheiereConnec), gTheiereConnec, GL_STATIC_DRAW );
+     //glBindBuffer( GL_ARRAY_BUFFER, 0 );
 
    glBindVertexArray(0);
 
@@ -294,10 +302,12 @@ void afficherTheiere()
    glBindVertexArray( vao[1] );
    // (partie 2) MODIFICATIONS ICI ...
    // vous pouvez utiliser temporairement cette fonction pour la première partie du TP, mais vous ferez mieux dans la seconde partie du TP
-   glBegin( GL_TRIANGLES );
-   for ( unsigned int i = 0 ; i < sizeof(gTheiereConnec)/sizeof(GLuint) ; i++ )
-      glVertex3fv( &(gTheiereSommets[3*gTheiereConnec[i]] ) );
-   glEnd( );
+   // glBegin( GL_TRIANGLES );
+   // for ( unsigned int i = 0 ; i < sizeof(gTheiereConnec)/sizeof(GLuint) ; i++ )
+   //    glVertex3fv( &(gTheiereSommets[3*gTheiereConnec[i]] ) );
+   // glEnd( );
+    glDrawElements(GL_TRIANGLES, sizeof(gTheiereSommets), GL_UNSIGNED_INT, NULL);
+
    glBindVertexArray(0);
 }
 
@@ -355,8 +365,15 @@ void afficherCorps()
       case 2: // une théière
          glVertexAttrib3f( locColor, 0.0, 1.0, 0.0 ); // vert; équivalent au glColor() de OpenGL 2.x
          matrModel.PushMatrix();{
+
+
+            matrModel.Scale(bestiole.taille, bestiole.taille, bestiole.taille);
+            matrModel.Rotate(90, 1., 0., 0.);
+
+            // centre
             matrModel.Scale( 0.45, 0.45, 0.45 );
             matrModel.Translate( 0.0, -2.0, 0.0 );
+
             glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
             afficherTheiere();
          }matrModel.PopMatrix(); glUniformMatrix4fv( locmatrModel, 1, GL_FALSE, matrModel );
