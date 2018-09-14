@@ -80,7 +80,7 @@ Cependant, lorsque la bestiole est à l'arrêt, elle ne garde pas sa direction.
 
 Cela implique que les entrées utilisateur ne provoquent pas de changement d'orientation car il semblerait que même en les maintenant enfoncées, on peut passer deux fois dans afficherCorps() sans les prendre en compte.
 
-La méthode présentée ici ne souffrirait pas de ce problème.
+La méthode présentée ici ne souffre pas de ce problème.
 
 
 
