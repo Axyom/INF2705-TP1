@@ -1,7 +1,6 @@
 // Prénoms, noms et matricule des membres de l'équipe:
-// - Gergi Younis (matricule1)
 // - Paul Michelon (1971832)
-#warning "Écrire les prénoms, noms et matricule des membres de l'équipe dans le fichier et commenter cette ligne"
+//#warning "Écrire les prénoms, noms et matricule des membres de l'équipe dans le fichier et commenter cette ligne"
 
 #include <iostream>
 #include <math.h>
@@ -10,6 +9,11 @@
 #include "inf2705-fenetre.h"
 #include "inf2705-forme.h"
 #include "inf2705-theiere.h"
+
+#define POINTE_VERS_DIRECTION 0
+
+//direction
+glm::vec3 dir = glm::vec3(1.0, 0.0, 0.0);
 
 // variables pour l'utilisation des nuanceurs
 GLuint progBase;  // le programme de nuanceurs de base
@@ -103,14 +107,13 @@ public:
       if ( angleAile > 90.0 ) angleAile = 90.0; else if ( angleAile < 0.0 ) angleAile = 0.0;
    }
    glm::vec3 position;       // position courante de la bestiole
-   glm::vec3 last_position;
    GLfloat taille;           // facteur d'échelle du corps
    GLfloat angleCorps;       // angle de rotation (en degrés) de la bestiole
    GLfloat angleAile;        // angle de rotation (en degrés) des ailes
    GLfloat anglePatte;       // angle de rotation (en degrés) des pattes
    const GLfloat longPatte;  // longueur des pattes
    const GLfloat largPatte;  // largeur des pattes
-} bestiole = { glm::vec3(0.0, 0.0, 2.0), glm::vec3(0.0, 0.0, 0.0), 0.5, 0.0, 0.0, 0.0, 0.7, 0.1 };
+} bestiole = { glm::vec3(0.0, 0.0, 2.0), 0.5, 0.0, 0.0, 0.0, 0.7, 0.1 };
 
 // partie 2: utilisaiton de vbo et vao
 GLuint vao[2] = {0,0};
@@ -139,6 +142,12 @@ void calculerPhysique( )
       if ( bestiole.position.z-bestiole.taille <= 0.0 ) sens[2] = +1.0;
       else if ( bestiole.position.z+bestiole.taille >= etat.dimBoite ) sens[2] = -1.0;
       bestiole.position.z += vitesse.z * sens[2];
+
+      dir.x = sens[0];
+      dir.y = sens[1];
+      dir.z = sens[2];
+
+      dir *= vitesse;
 
       // angle des pattes et des ailes
       if ( bestiole.anglePatte <= 0.0 ) sens[3] = +1.0;
@@ -323,43 +332,38 @@ void afficherCorps()
    // avec l'angle de rotation "bestiole.angleCorps" et de la taille "bestiole.taille"
 
    // amener le repère à la position courante
-   if(1)
+   if( ! POINTE_VERS_DIRECTION)
    {
      matrModel.Translate(bestiole.position[0], bestiole.position[1], bestiole.position[2]);
      matrModel.Rotate(bestiole.angleCorps, 0., 0., 1.);
    }
-   else
+   else // reponse a la question 2 de rapport.txt
    {
-     matrModel.Translate(bestiole.position[0], bestiole.position[1], bestiole.position[ 2]);
-
-     glm::vec3 dir = bestiole.position - bestiole.last_position;
-     bestiole.last_position = bestiole.position;
+     matrModel.Translate(bestiole.position[0], bestiole.position[1], bestiole.position[2]);
      //glm::vec3 orientation = glm::vec3(1.0, 0.0, 0.0);
      float thet = atan(dir[1]/dir[0]);
      float ph = atan(dir[2]/sqrt(dir[1]*dir[1] + dir[0]*dir[0]));
 
-     std::cout << "\n";
-     std::cout << thet << " theta\n";
-     std::cout << ph << " ph\n";
-
      if (dir[0] == 0.0)
      {
-       thet = 90;
+       thet = M_PI/2 * ((dir[1] > 0.0)?(1):(-1));
 
-       if (dir[1] == 0.0)
+       if(dir[1] == 0.0)
        {
-         ph = 90;
+          ph = M_PI/2 * ((dir[2] > 0.0)?(1):(-1));
        }
      }
-
-     if (dir[0] < 0.0)
+     else if (dir[0] < 0.0)
      {
        thet = thet + M_PI;
      }
 
-     matrModel.Rotate(glm::degrees(thet), 0., 0., 1.);
-     matrModel.Rotate(glm::degrees(ph), 0., -1., 0.);
+     //if (dir[0] != 0.0)
+     {
 
+       matrModel.Rotate(glm::degrees(thet), 0., 0., 1.);
+       matrModel.Rotate(-glm::degrees(ph), 0., 1., 0.);
+     }
    }
 
 

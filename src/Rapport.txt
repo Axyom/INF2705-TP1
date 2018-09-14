@@ -4,8 +4,8 @@ Q1: Supposons que les coordonnées du modèle soient exprimées dans un système
     afin de préserver le même effet visuel d'une rotation positive ?  Quelle
     serait la nouvelle matrice pour une rotation autour de l'axe des Z ?
 
-Un système de coordonnées main gauche est symétrique par rapport à un système de coordonnées main droite. Ainsi, la convention du sens des rotations est inversée.
-Par conséquent, pour préserver le même effet visuel qu'une rotation positive, il faudrait modifier la matrice 4x4  en prenant l'opposé des angles.
+Un système de coordonnées main gauche (repère indirect) inverse la convention de signe des angles par rapport à un système de coordonnées main droite (repère direct). On peut s'en convaincre en remarquant qu'il existe une symétrie entre ces deux repères.
+Par conséquent, pour préserver le même effet visuel qu'une rotation positive, il faudrait modifier la matrice 4x4  en prenant l'opposé des angles de la transformation initiale.
 
 Par exemple, pour une matrice de rotation 4x4 autour de l'axe Z exprimée comme suit en coordonnées main droite:
 
@@ -25,7 +25,7 @@ On obtient la matrice équivalente suivante en coordonnées main gauche:
 	0		0		0		1		
 ]
 
-En utilisant le fait que cos est paire et que sin est impaire.
+En exploitant la parité de cos et sin.
 
 Q2: Dans ce TP, on peut déplacer la bestiole avec les flèches du clavier ou
     encore lancer un déplacement « automatique » avec la touche 'espace'.
@@ -38,4 +38,52 @@ Q2: Dans ce TP, on peut déplacer la bestiole avec les flèches du clavier ou
     sens de son mouvement. Comment faire en sorte que la tête (et le corps)
     soit toujours dirigée dans le sens de son mouvement ?
     Décrivez (avec assez de détails) comment vous implanteriez ceci dans ce TP.
+
+Avant-propos : le code implémentant cette fonctionnalité est disponible en passant le define POINTE_VERS_DIRECTION à 1 dans main.cpp.
+
+On doit tout d'abord déterminer la direction (dir) de la bestiole. La direction est déterminée soit par calculerPhysique(), soit par dans les entrées utilisateur.
+
+Dans calculerPhysique(), on ajoute le code suivant :
+
+	dir.x = sens[0];
+	dir.y = sens[1];
+	dir.z = sens[2];
+	dir *= vitesse;
+
+Il est nécessaire de multiplier par vitesse car elle n'est pas uniforme selon toutes les composantes.
+
+Pour les entrées utilisateur, on affecte à dir la direction correspondante dans le switch/case (cela n'a pas été fait dans le code).
+
+On remarque que la bestiole est orientée par défaut vers l'axe des X croissants. On peut dès lors diviser l'orientation selon deux angles :
+	- theta, qui correspond à l'angle entre l'orientation par défaut et la projection de dir dans le plan (O,X,Y)
+	- phi, qui correspond à l'angle entre le plan (O,X,Y) et dir.
+
+On calcule ces deux angles avec les formules trigonométriques suivantes : 
+
+theta = 	arctan(dir.y/dir.x) 			si dir.x > 0
+		arctan(dir.y/dir.x) + PI 		si dir.x < 0
+		signe(dir.y)*PI/2			si dir.x = 0
+
+phi = 		arctan(dir.z/sqrt(dir.x^2 + dir.y^2))	si !(dir.x = 0 et dir.y = 0)
+		signe(dir.z)*PI/2			sinon
+
+On effectue ensuite les opérations suivantes : 
+
+matrModel.Translate(bestiole.position[0], bestiole.position[1], bestiole.position[2]);
+matrModel.Rotate(glm::degrees(thet), 0., 0., 1.);
+matrModel.Rotate(-glm::degrees(ph), 0., 1., 0.);
+
+Addendum:
+Nous avons également testé une autre manière de résoudre ce problème. Nous avons enregitré la position précédente de la bestiole dans la fonction afficherCorps() et nous avons calculé sa direction en faisant la soustraction de la position courante et de la position précédente.
+
+Cependant, lorsque la bestiole est à l'arrêt, elle ne garde pas sa direction.
+
+Cela implique que les entrées utilisateur ne provoquent pas de changement d'orientation car il semblerait que même en les maintenant enfoncées, on peut passer deux fois dans afficherCorps() sans les prendre en compte.
+
+La méthode présentée ici ne souffrirait pas de ce problème.
+
+
+
+
+
 
