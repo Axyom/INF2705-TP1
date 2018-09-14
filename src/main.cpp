@@ -124,7 +124,7 @@ void calculerPhysique( )
    {
       static int sens[6] = { +1, +1, +1, +1, +1, +1 };
       glm::vec3 vitesse( 0.03, 0.02, 0.05 );
-      float facteurVitesse = .005;
+      float facteurVitesse = 1.0;
       vitesse *= facteurVitesse;
 
       // mouvement en X
